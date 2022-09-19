@@ -1,5 +1,5 @@
 import httpProxy from "http-proxy";
-import { TrafficLightClient } from "./TrafficLightClient";
+import { TrafficLightClient } from "./trafficlight/TrafficLightClient";
 
 const SYNAPSE_HOST = "http://localhost:35355";
 let proxy = httpProxy.createProxyServer({ target: SYNAPSE_HOST }).listen(4040);
