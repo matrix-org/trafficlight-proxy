@@ -4,7 +4,7 @@
   "main": "index.js",
   "license": "MIT",
   "scripts": {
-    "start": "nodemon app.ts"
+    "start": "nodemon src/server.ts"
   },
   "dependencies": {
     "@types/http-proxy": "^1.17.9",
