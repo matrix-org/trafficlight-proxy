@@ -1,7 +1,12 @@
-import httpProxy from "http-proxy";
-import { TrafficLightClient } from "./trafficlight/TrafficLightClient";
+import { NetworkProxyTrafficLightClient } from "./trafficlight";
 
-const SYNAPSE_HOST = "http://localhost:35355";
-let proxy = httpProxy.createProxyServer({ target: SYNAPSE_HOST }).listen(4040);
-const trafficLightClient = new TrafficLightClient("http://localhost:5000");
-trafficLightClient.register("network-proxy", {endpoint: "http://somehost:3030"});
+async function doFoo() {
+    const SYNAPSE_HOST = "http://localhost:35355";
+    const trafficLightClient = new NetworkProxyTrafficLightClient("http://localhost:5000", "http://localhost:4040");
+    trafficLightClient["createProxy"]("http://172.18.0.5:8008");
+    trafficLightClient["disableEndpoint"]("/_matrix/static/");
+    // await trafficLightClient.register();
+    // await trafficLightClient.start();
+}
+
+doFoo();

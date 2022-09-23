@@ -6,10 +6,12 @@ type PollData = {
     data: Record<string, any>;
 };
 
-type ActionCallback = (action: string, data: Record<string, string>) => Promise<string>;
+type ActionCallback = (data?: Record<string, string>, client?: TrafficLightClient) => Promise<string | void>;
 
-class ActionMap {
-    private readonly actions: Record<string, ActionCallback>  = {};
+export class ActionMap {
+    constructor(
+        private readonly actions: Record<string, ActionCallback> = {},
+    ) {}
 
     on(action: string, callback: ActionCallback): void {
         if (this.actions[action]) {
@@ -17,7 +19,6 @@ class ActionMap {
         }
         this.actions[action] = callback;
     }
-
 
     off(action: string): void {
         if (!this.actions[action]) {
@@ -31,21 +32,22 @@ class ActionMap {
     }
 }
 
-export class TrafficLightClient extends ActionMap {
+export class TrafficLightClient {
+    private uuid: string;
+
 	constructor(
 		private readonly trafficLightServerURL: string,
-    ) {
-        super();
-    }
+        private readonly actionMap: ActionMap = new ActionMap(),
+    ) {}
 
-    async register(type:string, data: Record<string, string>): Promise<void> {
-        console.log('Registering trafficlight client');
+    protected async _register(type:string, data: Record<string, string>): Promise<void> {
+        console.log('Registering trafficlight client ...');
         const body = JSON.stringify({
             type,
             ...data
         });
-        const uuid = crypto.randomUUID();
-        const target = `${this.trafficLightServerURL}/client/${uuid}/register`;
+        this.uuid = crypto.randomUUID();
+        const target = `${this.trafficLightServerURL}/client/${this.uuid}/register`;
         const response = await fetch(target, {
             method: "POST",
             body,
@@ -54,7 +56,7 @@ export class TrafficLightClient extends ActionMap {
         if (response.status != 200) {
             throw new Error(`Unable to register client, got ${ response.status } from server`);
         } else {
-            console.log(`Registered to trafficlight as ${uuid}`);
+            console.log(`Registered to trafficlight as ${this.uuid}`);
         }
     }
 
@@ -66,19 +68,20 @@ export class TrafficLightClient extends ActionMap {
                 throw new Error(`poll failed with ${pollResponse.status}`);
             }
             const pollData = await pollResponse.json() as PollData;
-            console.log(` * running action ${pollData.action}`);
+            console.log(`* Trafficlight asked to execute action "${pollData.action}":`);
             if (pollData.action === 'exit') {
                 shouldExit = true;
             } else {
-                let result: string | undefined;
+                let result: Awaited<ReturnType<ActionCallback>>;
                 try {
                     const { action, data } = pollData;
-                    const callback = this.get(action);
+                    const callback = this.actionMap.get(action);
                     if (!callback) {
-                        console.log("WARNING: unknown action ", action);
+                        console.log("\tWARNING: unknown action ", action);
                         continue;
                     } 
-                    result = await callback(action, data);
+                    console.log(`\tAction for "${action}" found in action-map  ✔`);
+                    result = await callback(data, this);
                 } catch (err) {
                     console.error(err);
                     result = 'error';
@@ -102,11 +105,22 @@ export class TrafficLightClient extends ActionMap {
         }
     }
 
+    on(action: string, callback: ActionCallback): void {
+        this.actionMap.on(action, callback);
+    }
+
+    off(action: string): void {
+        this.actionMap.off(action);
+    }
+
+    get clientBaseUrl(): string {
+        return `${this.trafficLightServerURL}/client/${encodeURIComponent(this.uuid)}`;
+    }
     get pollUrl() {
-        return `${this.trafficLightServerURL}/poll`; 
+        return `${this.clientBaseUrl}/poll`; 
     }
 
     get respondUrl() {
-        return `${this.trafficLightServerURL}/respond`;
+        return `${this.clientBaseUrl}/respond`;
     }
 }
