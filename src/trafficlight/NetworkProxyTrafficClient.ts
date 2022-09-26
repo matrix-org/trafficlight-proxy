@@ -29,6 +29,8 @@ export class NetworkProxyTrafficLightClient extends TrafficLightClient {
             this.enableEndpoint(data.endpoint);
             return "endpointDisabled";
         });
+
+        this.on("exit", async () => { this.exit(); });
     }
 
     async register(): Promise<void> {
@@ -42,8 +44,8 @@ export class NetworkProxyTrafficLightClient extends TrafficLightClient {
             throw new Error(`"url" is not supplied with proxyTo action!`);
         }
         const port = parseInt(this.proxyURL.port, 10);
-        const replaceSynapseServerUrlWithProxyUrl = (data) => {
-            console.log("replacer running on ", url, this.proxyURL.toString());
+        const replaceSynapseServerUrlWithProxyUrl = (data: string) => {
+            console.log("Replacer running on ", url, this.proxyURL.toString());
             return data.replaceAll(url + "/", this.proxyURL.toString());
         };
         this.proxy = new Proxy()
@@ -67,5 +69,9 @@ export class NetworkProxyTrafficLightClient extends TrafficLightClient {
             throw new Error(`"endpoint" is not supplied with disableEndpoint action!`);
         }
         this.proxy.enableEndpoint(endpoint);
+    }
+
+    private exit() {
+        this.proxy.close();
     }
 }
