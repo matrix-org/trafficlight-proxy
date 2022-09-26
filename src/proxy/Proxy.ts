@@ -77,9 +77,6 @@ export class Proxy {
                 if (!needsDataProcessing) {
                     proxyRes.pipe(res, {end: true});
                 }
-                else {
-                    console.log("\t Need to process data, not piping");
-                }
             }
             else {
                 console.log(`Current endpoint "${currentEndpoint}" is blocked ​🔴​`);
@@ -95,6 +92,7 @@ export class Proxy {
                      */
                     return;
                 }
+                console.log(`\Response modifier found for endpoint "${currentEndpoint}"`);
                 let responseBuffer = Buffer.concat(body);
                 // un-gzip the buffer if needed
                 if (isCompressed) {
