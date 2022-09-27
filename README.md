@@ -32,7 +32,7 @@ There is a supported docker image at ghcr.io/vector-im/trafficlight-proxy can be
 
 You must pass `TRAFFICLIGHT_URL` and `PROXY_URL`.
 
-`PROXY_URL` should be set to an endpoint that the trafficlight clients can access. At present there is no way for the proxy to bind to a port different to the URL that clients would connect to; however the hostname is ignored.
+`PROXY_URL` should be set to an endpoint that the trafficlight clients can access. At present there is no way for the proxy to bind to a port different to the URL that clients would connect to; however the hostname is not used to bind the listening socket.
 
 ## Changing Proxy link and trafficlight server link
 ---
