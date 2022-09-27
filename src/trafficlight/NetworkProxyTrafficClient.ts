@@ -27,7 +27,8 @@ export class NetworkProxyTrafficLightClient extends TrafficLightClient {
 
         this.on("enableEndpoint", async (data: Record<string, string>) => {
             this.enableEndpoint(data.endpoint);
-            return "endpointDisabled";
+            return "endpointEnabled";
+        });
         });
 
         this.on("exit", async () => { this.exit(); });
