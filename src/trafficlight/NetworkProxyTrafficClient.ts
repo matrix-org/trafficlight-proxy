@@ -35,7 +35,7 @@ export class NetworkProxyTrafficLightClient extends TrafficLightClient {
     }
 
     async register(): Promise<void> {
-        await super._register("element-web", {
+        await super._register("network-proxy", {
             endpoint: this.proxyURL.toString(),
         });
     }
