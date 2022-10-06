@@ -1,5 +1,5 @@
 import { TrafficLightClient } from "./TrafficLightClient";
-import { Proxy } from "../proxy/Proxy";
+import { Proxy, WatchTimeoutError } from "../proxy";
 
 export class NetworkProxyTrafficLightClient extends TrafficLightClient {
     private proxy: Proxy;
@@ -27,14 +27,19 @@ export class NetworkProxyTrafficLightClient extends TrafficLightClient {
 
         this.on("enableEndpoint", async (data: Record<string, string>) => {
             this.enableEndpoint(data.endpoint);
-            return "endpointDisabled";
+            return "endpointEnabled";
+        });
+
+        this.on("waitUntilEndpointAccessed", async (data: Record<string, string>) => {
+            const { endpoint, timeout = "15000" } = data;
+            return await this.waitUntilEndpointAccessed(endpoint, parseInt(timeout, 10));
         });
 
         this.on("exit", async () => { this.exit(); });
     }
 
     async register(): Promise<void> {
-        await super._register("element-web", {
+        await super._register("network-proxy", {
             endpoint: this.proxyURL.toString(),
         });
     }
@@ -69,6 +74,25 @@ export class NetworkProxyTrafficLightClient extends TrafficLightClient {
             throw new Error(`"endpoint" is not supplied with disableEndpoint action!`);
         }
         this.proxy.enableEndpoint(endpoint);
+    }
+
+    private async waitUntilEndpointAccessed(endpoint: string, timeout: number) {
+        if (!endpoint) {
+            throw new Error(`"endpoint" is not supplied with waitUntilEndpointAccessed action!`);
+        }
+        try {
+            await this.proxy.waitForEndpoint(endpoint, timeout);
+        }
+        catch (e) {
+            if (e instanceof WatchTimeoutError) {
+                console.log(`WatchTimeoutError on endpoint ${endpoint}!`);
+            }
+            else {
+                throw e;
+            }
+            return "error";
+        }
+        return "endpointAccessed";
     }
 
     private exit() {

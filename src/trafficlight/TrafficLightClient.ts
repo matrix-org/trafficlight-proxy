@@ -68,7 +68,7 @@ export class TrafficLightClient {
                 throw new Error(`poll failed with ${pollResponse.status}`);
             }
             const pollData = await pollResponse.json() as PollData;
-            console.log(`* Trafficlight asked to execute action "${pollData.action}":`);
+            console.log(`* Trafficlight asked to execute action "${pollData.action}", data = ${JSON.stringify(pollData.data)}:`);
             if (pollData.action === 'exit') {
                 shouldExit = true;
             } else {
