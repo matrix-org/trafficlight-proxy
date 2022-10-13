@@ -1,5 +1,4 @@
 export class WatchTimeoutError extends Error {
-
     get name() {
         return "WatchTimeoutError";
     }

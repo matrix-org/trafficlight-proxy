@@ -1,7 +1,8 @@
-import { WatchTimeoutError } from "./WatchTimeoutError";
 import httpProxy from "http-proxy";
 import http from "http";
 import zlib from "zlib";
+
+import { WatchTimeoutError } from "./WatchTimeoutError";
 
 type ResponseModifier = (response: string) => string;
 
@@ -12,12 +13,11 @@ export class Proxy {
     private responseModifierMap: Map<string, ResponseModifier> = new Map();
     private waitForMap: Map<string, () => void> = new Map();
     public targetURL: string;
-    
+
     target(url: string) {
         try {
             new URL(url);
-        }
-        catch (e) {
+        } catch (e) {
             throw new Error("Invalid URL provided to Proxy.target() method");
         }
         this.targetURL = url;
@@ -38,7 +38,7 @@ export class Proxy {
             return;
         }
         console.log(`Current endpoint "${currentEndpoint}" is not blocked 🟢`);
-        this.httpProxy.web(req, res); 
+        this.httpProxy.web(req, res);
     }
 
     listen(port: number) {
@@ -52,10 +52,9 @@ export class Proxy {
     disableEndpoint(endpoint: string) {
         if (!this.disabledEndpoints.includes(endpoint)) {
             this.disabledEndpoints.push(endpoint);
-       }
-        else {
-            console.warn(`Endpoint ${endpoint} is already disabled!`)
-       }
+        } else {
+            console.warn(`Endpoint ${endpoint} is already disabled!`);
+        }
         return this;
     }
 
@@ -81,7 +80,7 @@ export class Proxy {
             return existingPromise;
         }
         const timeoutPromise = new Promise((_, rej) => {
-            setTimeout(() => { rej(new WatchTimeoutError()) }, timeout);
+            setTimeout(() => { rej(new WatchTimeoutError()); }, timeout);
         });
         const watchPromise = new Promise((res: (val: void) => void) => {
             this.waitForMap.set(endpoint, res);
@@ -92,7 +91,7 @@ export class Proxy {
 
     close() {
         if (!this.httpProxy) {
-            console.warn("Cannot close because proxy was never created!")
+            console.warn("Cannot close because proxy was never created!");
             return;
         }
         this.httpSever.close();
@@ -107,14 +106,14 @@ export class Proxy {
             const needsDataProcessing = !!responseModifier;
             res.writeHead(proxyRes.statusCode, proxyRes.headers);
             if (!needsDataProcessing) {
-                proxyRes.pipe(res, {end: true});
+                proxyRes.pipe(res, { end: true });
             }
-            let body = [];
+            const body = [];
             proxyRes.on('data', (chunk) => { body.push(chunk); });
             proxyRes.on('end', () => {
                 if (!needsDataProcessing) {
                     /**
-                     * We've already piped the result; so nothing left to do. 
+                     * We've already piped the result; so nothing left to do.
                      */
                     return;
                 }
@@ -147,5 +146,4 @@ export class Proxy {
             }
         }
     }
-
 }

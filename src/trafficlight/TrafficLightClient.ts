@@ -35,16 +35,16 @@ export class ActionMap {
 export class TrafficLightClient {
     private uuid: string;
 
-	constructor(
+    constructor(
 		private readonly trafficLightServerURL: string,
         private readonly actionMap: ActionMap = new ActionMap(),
     ) {}
 
-    protected async _register(type:string, data: Record<string, string>): Promise<void> {
+    protected async _register(type: string, data: Record<string, string>): Promise<void> {
         console.log('Registering trafficlight client ...');
         const body = JSON.stringify({
             type,
-            ...data
+            ...data,
         });
         this.uuid = crypto.randomUUID();
         const target = `${this.trafficLightServerURL}/client/${this.uuid}/register`;
@@ -79,7 +79,7 @@ export class TrafficLightClient {
                     if (!callback) {
                         console.log("\tWARNING: unknown action ", action);
                         continue;
-                    } 
+                    }
                     console.log(`\tAction for "${action}" found in action-map  ✔`);
                     result = await callback(data, this);
                 } catch (err) {
@@ -117,7 +117,7 @@ export class TrafficLightClient {
         return `${this.trafficLightServerURL}/client/${encodeURIComponent(this.uuid)}`;
     }
     get pollUrl() {
-        return `${this.clientBaseUrl}/poll`; 
+        return `${this.clientBaseUrl}/poll`;
     }
 
     get respondUrl() {

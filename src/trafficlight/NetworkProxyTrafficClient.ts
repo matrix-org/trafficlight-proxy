@@ -59,7 +59,6 @@ export class NetworkProxyTrafficLightClient extends TrafficLightClient {
             .addResponseModifier("/_matrix/client/r0/login", replaceSynapseServerUrlWithProxyUrl)
             .addResponseModifier("/.well-known/matrix/client", replaceSynapseServerUrlWithProxyUrl)
             .listen(port);
-
     }
 
     private disableEndpoint(endpoint: string) {
@@ -82,12 +81,10 @@ export class NetworkProxyTrafficLightClient extends TrafficLightClient {
         }
         try {
             await this.proxy.waitForEndpoint(endpoint, timeout);
-        }
-        catch (e) {
+        } catch (e) {
             if (e instanceof WatchTimeoutError) {
                 console.log(`WatchTimeoutError on endpoint ${endpoint}!`);
-            }
-            else {
+            } else {
                 throw e;
             }
             return "error";
