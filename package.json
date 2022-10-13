@@ -5,7 +5,7 @@
   "license": "MIT",
   "scripts": {
     "start-dev": "nodemon src/server.ts",
-    "start": "ts-node src/server.ts"
+    "start": "ts-node src/server.ts",
     "lint": "yarn lint:types && yarn lint:js",
     "lint:js": "eslint --max-warnings 0 src",
     "lint:js-fix": "eslint --fix src",
