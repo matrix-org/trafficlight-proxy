@@ -32,7 +32,7 @@ export class Proxy {
         this.resolveWaitIfNeeded(currentEndpoint);
         const isEndpointBlocked = this.disabledEndpoints.some(endpoint => currentEndpoint.includes(endpoint));
         if (isEndpointBlocked) {
-            console.log(`Current endpoint "${currentEndpoint}" is blocked ​🔴​`);
+            console.log(`Current endpoint "${currentEndpoint}" is blocked 🔴`);
             res.statusCode = 503;
             res.end("Blocked");
             return;
@@ -117,7 +117,7 @@ export class Proxy {
                      */
                     return;
                 }
-                console.log(`\Response modifier found for endpoint "${currentEndpoint}"`);
+                console.log(`Response modifier found for endpoint "${currentEndpoint}"`);
                 let responseBuffer = Buffer.concat(body);
                 // Un-gzip the buffer if needed
                 const isCompressed = proxyRes.headers["content-encoding"] === "gzip";
