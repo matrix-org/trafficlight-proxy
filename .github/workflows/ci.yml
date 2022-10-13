@@ -1,0 +1,25 @@
+name: Linting
+on:
+  pull_request: { }
+  push:
+    branches: [ main ]
+jobs:
+  lint:
+    name: "Lint"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-node@v3
+        with:
+          cache: 'yarn'
+      
+      - name: Install Deps
+        run: "yarn install"
+
+      - name: Typecheck
+        run: "yarn run lint:types"
+
+      - name: Run JS Linter
+        run: "yarn run lint:js"
+
