@@ -8,14 +8,25 @@ type ResponseModifier = (response: string) => string;
 
 type IncomingMessageWithStartTime = http.IncomingMessage & { startTime: number };
 
+class ResponseDelay {
+    raw: string
+    compiled: RegExp
+    delay: number
+    constructor(raw: string, delay: number) {
+        this.raw = raw;
+        this.delay = delay;
+        this.compiled = new RegExp(raw);
+    }
+}
+
 export class Proxy {
     private httpProxy: ReturnType<typeof httpProxy.createProxyServer>;
     private httpSever: http.Server;
     private disabledEndpoints: string[] = [];
     private responseModifierMap: Map<string, ResponseModifier> = new Map();
     private waitForMap: Map<string, () => void> = new Map();
-    private responseDelayMap: Map<string, number> = new Map();
-    private defaultResponseDelay = 50;
+    private responseDelayList: Array<ResponseDelay>= new Array();
+    private defaultResponseDelay = 0;
     public targetURL: string;
     // milliseconds of added delay for early requests
     private underspillDuration = 0;
@@ -82,6 +93,17 @@ export class Proxy {
         return this;
     }
 
+    addResponseDelay(endpointRegex: string, delayMs: number) {
+        // We unshift onto the front of the array because generally adding
+        // tests will want to go from least specific to most specific.
+        this.responseDelayList.unshift(new ResponseDelay(endpointRegex, delayMs));
+        return this;
+    }
+
+    responseDelayDefault(delayMs: number) {
+        this.defaultResponseDelay = delayMs;
+        return this;
+    }
     async waitForEndpoint(endpoint: string, timeout: number) {
         // See if we're already tracking this endpoint
         const existingPromise = this.waitForMap.get(endpoint);
@@ -111,13 +133,14 @@ export class Proxy {
     }
 
     private identifyResponseDelay(currentEndpoint) {
-        let data = this.responseDelayMap.get(currentEndpoint);
-        if (data == null) {
-            data = this.defaultResponseDelay;
+        for (const responseDelay of this.responseDelayList) {
+            if (responseDelay.compiled.test(currentEndpoint)) {
+                return responseDelay.delay;
+            }
         }
-        console.log(`Set delay ${data} for {$currentEndpoint}`);
-        return data;
+        return this.defaultResponseDelay;
     }
+
     private setupEvents() {
         this.httpProxy.on('proxyRes', (proxyRes, req, res) => {
             const currentEndpoint = req.url;
@@ -151,6 +174,8 @@ export class Proxy {
                     let modifiedBuffer = Buffer.from(modifiedResponseString);
                     if (modifiedBuffer.toString() === responseBuffer.toString()) {
                         console.warn("Response modifier made no changes!");
+                        console.info("BEFORE", responseBuffer.toString());
+                        console.info("AFTER", modifiedBuffer.toString());
                     }
                     // Gzip the modified buffer if needed
                     if (isCompressed) {

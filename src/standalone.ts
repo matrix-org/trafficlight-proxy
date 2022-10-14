@@ -14,8 +14,9 @@ async function start() {
        .target(targetURL)
        .addResponseModifier("/_matrix/client/v3/login", replaceSynapseServerUrlWithProxyUrl)
        .addResponseModifier("/_matrix/client/r0/login", replaceSynapseServerUrlWithProxyUrl)
-       .addResponseModifier("/.well-known/matrix/client", replaceSynapseServerUrlWithProxyUrl);
-
+       .addResponseModifier("/.well-known/matrix/client", replaceSynapseServerUrlWithProxyUrl)
+       .addResponseDelay("/_matrix/client/", 500)
+       .responseDelayDefault(0);
    
 
    proxy.listen(port);
