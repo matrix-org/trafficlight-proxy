@@ -15,7 +15,7 @@ export class Proxy {
     private responseModifierMap: Map<string, ResponseModifier> = new Map();
     private waitForMap: Map<string, () => void> = new Map();
     private responseDelayMap: Map<string, number> = new Map();
-    private defaultResponseDelay = 0;
+    private defaultResponseDelay = 50;
     public targetURL: string;
     // milliseconds of added delay for early requests
     private underspillDuration = 0;
@@ -47,7 +47,7 @@ export class Proxy {
         }
         console.log(`Current endpoint "${currentEndpoint}" is not blocked 🟢`);
         (req as IncomingMessageWithStartTime).startTime = Date.now();
-        this.httpProxy.web(req, res);
+        this.httpProxy.web(req, res, { changeOrigin: true});
     }
 
     listen(port: number) {
@@ -115,6 +115,7 @@ export class Proxy {
         if (data == null) {
             data = this.defaultResponseDelay;
         }
+        console.log(`Set delay ${data} for {$currentEndpoint}`);
         return data;
     }
     private setupEvents() {
@@ -159,14 +160,16 @@ export class Proxy {
                     responseBuffer = modifiedBuffer;
                 }
                 if (needsResponseDelay) {
-                    const delay = Date.now() - (req as IncomingMessageWithStartTime).startTime;
+                    const delay = responseDelay - (Date.now() - (req as IncomingMessageWithStartTime).startTime);
                     if (delay > 0) {
+                        console.info(`Delaying  "${currentEndpoint}" by ${delay}ms`);
                         // response should be slower: add delay
                         setTimeout(function() {
                             res.end(responseBuffer);
                         }, delay);
                         this.underspillDuration = this.underspillDuration + delay;
                     } else {
+                        res.end(responseBuffer);
                         console.warn(`Response for endpoint "${currentEndpoint}" returned ${-delay}ms late`);
                         this.overspillDuration = this.overspillDuration - delay;
                     }
