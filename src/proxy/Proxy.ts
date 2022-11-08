@@ -10,6 +10,7 @@ export class Proxy {
     private httpProxy: ReturnType<typeof httpProxy.createProxyServer>;
     private httpSever: http.Server;
     private disabledEndpoints: string[] = [];
+    private delayedEndpoints: Record<string, number> = {};
     private responseModifierMap: Map<string, ResponseModifier> = new Map();
     private waitForMap: Map<string, () => void> = new Map();
     public targetURL: string;
@@ -36,6 +37,13 @@ export class Proxy {
             res.statusCode = 503;
             res.end("Blocked");
             return;
+        }
+        for (const [endpoint, delay] of Object.entries(this.delayedEndpoints)) {
+            if (currentEndpoint.includes(endpoint)) {
+                console.log(`Current endpoint "${currentEndpoint}" is delayed by ${delay} ms 🟡`);
+                this.respondAfterDelay(req, res, delay);
+                return;
+            }
         }
         console.log(`Current endpoint "${currentEndpoint}" is not blocked 🟢`);
         this.httpProxy.web(req, res);
@@ -68,6 +76,24 @@ export class Proxy {
         return this;
     }
 
+    delayEndpoint(endpoint: string, delay: number) {
+        if (this.delayedEndpoints[endpoint]) {
+            console.warn(`Endpoint ${endpoint} was already being delayed; it will now be delayed by ${delay} ms`);
+            throw new Error("Endpoint is already being delayed!");
+        }
+        this.delayedEndpoints[endpoint] = delay;
+        return this;
+    }
+
+    undelayEndpoint(endpoint: string) {
+        if (!this.delayedEndpoints[endpoint]) {
+            console.warn(`Cannot remove delay for endpoint ${endpoint} since no delay was added in the first place!`);
+            return;
+        }
+        delete this.delayedEndpoints[endpoint];
+        return this;
+    }
+
     addResponseModifier(endpoint: string, modifier: ResponseModifier) {
         this.responseModifierMap.set(endpoint, modifier);
         return this;
@@ -87,6 +113,12 @@ export class Proxy {
         });
         await Promise.race([watchPromise, timeoutPromise]);
         this.waitForMap.delete(endpoint);
+    }
+
+    private respondAfterDelay(req: http.IncomingMessage, res: http.ServerResponse, delay: number): void {
+        setTimeout(() => {
+            this.httpProxy.web(req, res);
+        }, delay);
     }
 
     close() {

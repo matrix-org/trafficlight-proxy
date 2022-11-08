@@ -35,6 +35,18 @@ export class NetworkProxyTrafficLightClient extends TrafficLightClient {
             return await this.waitUntilEndpointAccessed(endpoint, parseInt(timeout, 10));
         });
 
+        this.on("delayEndpoint", async (data: Record<string, string>) => {
+            const { endpoint, delay } = data;
+            this.delayEndpoint(endpoint, parseInt(delay, 10));
+            return "endpointDelayed";
+        });
+
+        this.on("undelayEndpoint", async (data: Record<string, string>) => {
+            const { endpoint } = data;
+            this.undelayEndpoint(endpoint);
+            return "endpointUndelayed";
+        });
+
         this.on("exit", async () => { this.exit(); });
     }
 
@@ -90,6 +102,23 @@ export class NetworkProxyTrafficLightClient extends TrafficLightClient {
             return "error";
         }
         return "endpointAccessed";
+    }
+
+    private delayEndpoint(endpoint: string, delay: number) {
+        if (!endpoint) {
+            throw new Error(`"endpoint" is not supplied with delayEndpoint action!`);
+        }
+        if (!delay) {
+            throw new Error(`"delay" is not supplied with delayEndpoint action!`);
+        }
+        this.proxy.delayEndpoint(endpoint, delay);
+    }
+
+    private undelayEndpoint(endpoint: string) {
+        if (!endpoint) {
+            throw new Error(`"endpoint" is not supplied with delayEndpoint action!`);
+        }
+        this.proxy.undelayEndpoint(endpoint);
     }
 
     private exit() {
