@@ -4,6 +4,7 @@
   "main": "index.js",
   "license": "MIT",
   "scripts": {
+    "start-standalone": "nodemon src/standalone.ts",
     "start-dev": "nodemon src/server.ts",
     "start": "ts-node src/server.ts",
     "lint": "yarn lint:types && yarn lint:js",
