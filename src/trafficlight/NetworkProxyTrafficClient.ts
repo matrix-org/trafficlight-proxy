@@ -4,11 +4,13 @@ import { Proxy, WatchTimeoutError } from "../proxy";
 export class NetworkProxyTrafficLightClient extends TrafficLightClient {
     private proxy: Proxy;
     public proxyURL: URL;
+    private listenPort: number;
 
-    constructor(trafficLightServerURL: string, proxyURL: string) {
+    constructor(trafficLightServerURL: string, proxyURL: URL, listenPort: number) {
         super(trafficLightServerURL);
         this.hookActionsToMethods();
-        this.proxyURL = new URL(proxyURL);
+        this.proxyURL = proxyURL;
+        this.listenPort = listenPort;
     }
 
     private hookActionsToMethods() {
@@ -60,7 +62,6 @@ export class NetworkProxyTrafficLightClient extends TrafficLightClient {
         if (!url) {
             throw new Error(`"url" is not supplied with proxyTo action!`);
         }
-        const port = parseInt(this.proxyURL.port, 10);
         const replaceSynapseServerUrlWithProxyUrl = (data: string) => {
             console.log("Replacer running on ", url, this.proxyURL.toString());
             return data.replaceAll(url + "/", this.proxyURL.toString());
@@ -70,7 +71,7 @@ export class NetworkProxyTrafficLightClient extends TrafficLightClient {
             .addResponseModifier("/_matrix/client/v3/login", replaceSynapseServerUrlWithProxyUrl)
             .addResponseModifier("/_matrix/client/r0/login", replaceSynapseServerUrlWithProxyUrl)
             .addResponseModifier("/.well-known/matrix/client", replaceSynapseServerUrlWithProxyUrl)
-            .listen(port);
+            .listen(this.listenPort);
     }
 
     private disableEndpoint(endpoint: string) {
