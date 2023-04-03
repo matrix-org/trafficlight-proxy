@@ -69,6 +69,7 @@ export class NetworkProxyTrafficLightClient extends TrafficLightClient {
             .target(url)
             .addResponseModifier("/_matrix/client/v3/login", replaceSynapseServerUrlWithProxyUrl)
             .addResponseModifier("/_matrix/client/r0/login", replaceSynapseServerUrlWithProxyUrl)
+            .addResponseModifier("/client/server.json", replaceSynapseServerUrlWithProxyUrl)
             .addResponseModifier("/.well-known/matrix/client", replaceSynapseServerUrlWithProxyUrl)
             .listen(port);
     }
