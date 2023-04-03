@@ -70,23 +70,25 @@ export class TrafficLightClient {
             const pollData = await pollResponse.json() as PollData;
             console.log(`* Trafficlight asked to execute action "${pollData.action}", `
                        +`data = ${JSON.stringify(pollData.data)}:`);
+            let result: Awaited<ReturnType<ActionCallback>>;
+            try {
+                const { action, data } = pollData;
+                const callback = this.actionMap.get(action);
+                if (!callback) {
+                    console.log("\tWARNING: unknown action ", action);
+                    continue;
+                }
+                console.log(`\tAction for "${action}" found in action-map  ✔`);
+                result = await callback(data, this);
+            } catch (err) {
+                console.error(err);
+                result = 'error';
+            }
             if (pollData.action === 'exit') {
+                // Mark loop as terminating, do not call
+                // back to trafficlight to say exit has been completed.
                 shouldExit = true;
             } else {
-                let result: Awaited<ReturnType<ActionCallback>>;
-                try {
-                    const { action, data } = pollData;
-                    const callback = this.actionMap.get(action);
-                    if (!callback) {
-                        console.log("\tWARNING: unknown action ", action);
-                        continue;
-                    }
-                    console.log(`\tAction for "${action}" found in action-map  ✔`);
-                    result = await callback(data, this);
-                } catch (err) {
-                    console.error(err);
-                    result = 'error';
-                }
                 if (result) {
                     const respondResponse = await fetch(this.respondUrl, {
                         method: 'POST',

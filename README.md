@@ -30,14 +30,20 @@ The proxy will again be at `http://localhost:4040`, but nodemon will reload the 
 
 There is a supported docker image at ghcr.io/vector-im/trafficlight-proxy can be used to run this proxy.
 
-You must pass `TRAFFICLIGHT_URL` and `PROXY_URL`.
+You must pass `TRAFFICLIGHT_URL` and `PROXY_URL`. You may also pass `LISTEN_PORT`.
 
-`PROXY_URL` should be set to an endpoint that the trafficlight clients can access. At present there is no way for the proxy to bind to a port different to the URL that clients would connect to; however the hostname is not used to bind the listening socket.
+`TRAFFICLIGHT_URL` should be set to a trafficlight server.
+
+`PROXY_URL` should be set to an endpoint that the trafficlight clients can access.
+
+`LISTEN_PORT` should be set to the tcp port that the proxy should bind to. If unset it will use the port from `PROXY_URL`.
+
 
 ## Changing Proxy link and trafficlight server link
 ---
 The defaults are:
 - Trafficlight server is assumed to be running at http://localhost:5000
 - Proxy will be running at http://localhost:4040
+- Proxy will listen on the port from PROXY\_URL (:4040)
 
 Change them via `TRAFFICLIGHT_URL` and `PROXY_URL` environment variables respectively.
