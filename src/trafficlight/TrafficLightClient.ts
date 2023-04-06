@@ -61,8 +61,7 @@ export class TrafficLightClient {
     }
 
     async start() {
-        let shouldExit = false;
-        while (!shouldExit) {
+        while (true) {
             const pollResponse = await fetch(this.pollUrl);
             if (pollResponse.status !== 200) {
                 throw new Error(`poll failed with ${pollResponse.status}`);
@@ -85,24 +84,22 @@ export class TrafficLightClient {
                 result = 'error';
             }
             if (pollData.action === 'exit') {
-                // Mark loop as terminating, do not call
-                // back to trafficlight to say exit has been completed.
-                shouldExit = true;
-            } else {
-                if (result) {
-                    const respondResponse = await fetch(this.respondUrl, {
-                        method: 'POST',
-                        body: JSON.stringify({
-                            response: result,
-                        }),
-                        headers: {
-                            'Accept': 'application/json',
-                            'Content-Type': 'application/json',
-                        },
-                    });
-                    if (respondResponse.status !== 200) {
-                        throw new Error(`respond failed with ${respondResponse.status}`);
-                    }
+                // Exit out and skip callback to trafficlight.
+                return;
+            }
+            if (result) {
+                const respondResponse = await fetch(this.respondUrl, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        response: result,
+                    }),
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                    },
+                });
+                if (respondResponse.status !== 200) {
+                    throw new Error(`respond failed with ${respondResponse.status}`);
                 }
             }
         }
